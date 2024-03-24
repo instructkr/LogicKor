@@ -23,7 +23,7 @@ df_questions = pd.read_json('questions.jsonl', lines=True)
 
 
 def format_single_turn_question(question):
-    return single_turn_template.format(question)
+    return single_turn_template.format(question[0])
 
 single_turn_questions = df_questions['questions'].map(format_single_turn_question)
 single_turn_outputs = [output.outputs[0].text.strip() for output in llm.generate(single_turn_questions, sampling_params)]
