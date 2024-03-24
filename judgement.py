@@ -5,7 +5,7 @@ from concurrent.futures import ThreadPoolExecutor
 from threading import Lock
 import json
 import time
-import datetime
+from datetime import datetime
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--model-output', help=' : Model Output File Location', default=None)
