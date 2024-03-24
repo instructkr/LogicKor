@@ -10,7 +10,7 @@ import datetime
 parser = argparse.ArgumentParser()
 parser.add_argument('--model-output', help=' : Model Output File Location', default=None)
 parser.add_argument('--openai-api-key', help=' : Model', default=None)
-parser.add_argument('--judge-model', help=' : Judge Model', default='gpt-4-0125-preview')
+parser.add_argument('--judge-model', help=' : Judge Model', default='gpt-4-0613')
 parser.add_argument('--threads', help=' : Thread count', default=10, type=int)
 args = parser.parse_args()
 
