@@ -28,14 +28,14 @@ df_judge_template = pd.read_json('judge_template.jsonl', lines=True)
 
 lock = Lock()
 def create_answers(model_output, is_multi_turn = False):
-    prompt = f"""**질문**\n{model_output['questions'][0]}\n\n**모델 답변**\n{model_output['outputs'][0]}"""
+    prompt = f"""**질문**\n{model_output['questions'][0]}\n\n**모델 답변**\n{model_output['outputs'][0]}\n\n[[대화 종료. 평가 시작.]]"""
 
     if model_output['references'] != None:
         if model_output['references'][0] != None:
             prompt += f"\n\n**Ground Truth**\n{model_output['references'][0]}"
 
     if is_multi_turn:
-        prompt += f"\n\n**이어지는 질문**\n{model_output['questions'][1]}\n\n**모델 답변**\n{model_output['outputs'][1]}"
+        prompt += f"\n\n**이어지는 질문**\n{model_output['questions'][1]}\n\n**모델 답변**\n{model_output['outputs'][1]}\n\n[[대화 종료. 평가 시작.]]"
         if model_output['references'] != None:
             if model_output['references'][1] != None:
                 prompt += f"\n\n**Ground Truth**\n{model_output['references'][1]}"
