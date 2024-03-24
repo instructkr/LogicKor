@@ -77,7 +77,7 @@ def process_item(_, row):
 
     
     with lock:
-        with open(f'judge_.jsonl', 'a', encoding='utf-8-sig') as f:
+        with open(f'judge_{datetime.now().strftime("%Y%m%d_%H%M%S")}.jsonl', 'a', encoding='utf-8-sig') as f:
             f.write(json.dumps(row, ensure_ascii=False))
             f.write('\n')
 
