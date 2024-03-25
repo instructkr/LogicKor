@@ -7,10 +7,12 @@ import json
 import time
 from datetime import datetime
 
+time_start = datetime.now().strftime("%Y%m%d_%H%M%S")
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--model-output', help=' : Model Output File Location', default=None)
 parser.add_argument('--openai-api-key', help=' : Model', default=None)
-parser.add_argument('--judge-model', help=' : Judge Model', default='gpt-4-0613')
+parser.add_argument('--judge-model', help=' : Judge Model', default='gpt-4-0125-preview')
 parser.add_argument('--threads', help=' : Thread count', default=10, type=int)
 args = parser.parse_args()
 
@@ -78,7 +80,7 @@ def process_item(_, row):
 
     
     with lock:
-        with open(f'judge_{datetime.now().strftime("%Y%m%d_%H%M%S")}.jsonl', 'a', encoding='utf-8-sig') as f:
+        with open(f'judge_{time_start}.jsonl', 'a', encoding='utf-8-sig') as f:
             f.write(json.dumps(row, ensure_ascii=False))
             f.write('\n')
 
