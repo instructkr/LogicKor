@@ -1,0 +1,4 @@
+{
+    "single_turn_template": "### User:\n{0}\n### Assistant:\n",
+    "multi_turn_template": "### User:\n{0}\n### Assistant:\n{1}</s>\n### User:\n{2}\n### Assistant:\n"
+}
