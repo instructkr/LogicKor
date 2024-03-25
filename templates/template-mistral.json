@@ -1,0 +1,4 @@
+{
+    "single_turn_template": " [INST] {0} [/INST] ",
+    "multi_turn_template": " [INST] {0} [/INST] {1} </s> [INST] {2} [/INST] "
+}

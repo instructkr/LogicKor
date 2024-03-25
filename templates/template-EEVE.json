@@ -1,0 +1,4 @@
+{
+    "single_turn_template": "You are an AI assistant. You will be given a task. You must generate a detailed and long answer.\n\n### Instruction: {0}\n\n### Response: ",
+    "multi_turn_template": "You are an AI assistant. You will be given a task. You must generate a detailed and long answer.\n\n### Instruction: {0}\n\n### Response: {1}<|im_end|>\n\n### Instruction: {2}\n\n### Response:"
+}

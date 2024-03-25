@@ -1,0 +1,4 @@
+{
+    "single_turn_template": "<|im_start|>user\n{0}\n<|im_end|>\n<|im_start|>assistant\n",
+    "multi_turn_template": "<|im_start|>user\n{0}\n<|im_end|>\n<|im_start|>assistant\n{1}\n<|im_end|>\n<|im_start|>user\n{2}\n<|im_end|>\n<|im_start|>assistant\n"
+}
