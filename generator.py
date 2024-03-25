@@ -17,7 +17,7 @@ single_turn_template = df_config.iloc[0]
 double_turn_template = df_config.iloc[1]
 
 llm = LLM(model=args.model, tensor_parallel_size=gpu_counts, max_model_len=args.model_len, gpu_memory_utilization=0.95)
-sampling_params = SamplingParams(temperature=0, top_p=1, top_k=-1, early_stopping=True, best_of=4, use_beam_search=True, max_tokens=args.model_len, stop=['<|endoftext|>', '</s>', '<|im_end|>', '[INST]', '[/INST]'])
+sampling_params = SamplingParams(temperature=0, top_p=1, top_k=-1, early_stopping=True, best_of=4, use_beam_search=True, skip_special_tokens=False, max_tokens=args.model_len, stop=['<|endoftext|>', '</s>', '<|im_end|>', '[INST]', '[/INST]'])
 
 df_questions = pd.read_json('questions.jsonl', lines=True)
 
