@@ -6,6 +6,7 @@ from threading import Lock
 import json
 import time
 from datetime import datetime
+import re
 
 time_start = datetime.now().strftime("%Y%m%d_%H%M%S")
 
@@ -29,39 +30,40 @@ df_model_outputs = pd.read_json(args.model_output, lines=True)
 df_judge_template = pd.read_json('judge_template.jsonl', lines=True)
 
 lock = Lock()
-def create_answers(model_output, is_multi_turn = False):
-    prompt = f"""**질문**\n{model_output['questions'][0]}\n\n**모델 답변**\n{model_output['outputs'][0]}"""
-
-    if model_output['references'] != None:
-        if model_output['references'][0] != None:
-            prompt += f"\n\n**Ground Truth**\n{model_output['references'][0]}"
+def create_answers(model_output, is_multi_turn=False):
+    # Construct prompt from model output
+    prompt = f"**질문**\n{model_output['questions'][0]}\n\n**모델 답변**\n{model_output['outputs'][0]}"
+    if model_output['references'] and model_output['references'][0]:
+        prompt += f"\n\n**Ground Truth**\n{model_output['references'][0]}"
 
     if is_multi_turn:
         prompt += f"\n\n**이어지는 질문**\n{model_output['questions'][1]}\n\n**모델 답변**\n{model_output['outputs'][1]}"
-        if model_output['references'] != None:
-            if model_output['references'][1] != None:
-                prompt += f"\n\n**Ground Truth**\n{model_output['references'][1]}"
-                
+        if model_output['references'] and model_output['references'][1]:
+            prompt += f"\n\n**Ground Truth**\n{model_output['references'][1]}"
     prompt += "\n\n[[대화 종료. 평가 시작.]]"
-    
+
     try:
         response = client.chat.completions.create(
-          model=args.judge_model,
-          temperature=0,
-          n=1,
-          messages=[
-            {"role": "system", "content": df_judge_template.iloc[1 if is_multi_turn else 0]['system_prompt'] },
-            {"role": "user", "content": prompt}
-          ]
+            model=args.judge_model,
+            temperature=0,
+            n=1,
+            messages=[
+                {"role": "system", "content": df_judge_template.iloc[1 if is_multi_turn else 0]['system_prompt']},
+                {"role": "user", "content": prompt}
+            ]
         )
-        # Code below is bit dirty. But it works. If you have better way to parse the response, please PR.
-        response = response.choices[0].message.content
-        start_index = response.find("평가:") + len("평가:")
-        end_index = response.rfind("점수")
-        judge_message = response[start_index:end_index].strip()
-        score_start_index = response.rfind("점수:") + len("점수:")
-        judge_score = float(response[score_start_index:].strip())
-        response = {
+        # Extract judge message and score using regular expressions
+        content = response.choices[0].message.content
+        judge_message_match = re.search(r"평가:(.*?)점수:", content, re.DOTALL)
+        judge_message = judge_message_match.group(1).strip() if judge_message_match else "No judge message found"
+        
+        judge_score_match = re.search(r"점수:\s*(\d+(\.\d+)?)", content)
+        if judge_score_match:
+            judge_score = float(judge_score_match.group(1))
+        else:
+            raise ValueError("No score found in response")
+        
+        return {
             'judge_message': judge_message,
             'judge_score': judge_score
         }
@@ -69,7 +71,6 @@ def create_answers(model_output, is_multi_turn = False):
         print("Error. Retrying after 10 sec", e)
         time.sleep(10)
         return create_answers(model_output, is_multi_turn)
-    return response
 
 def process_item(_, row):
     row = row[1]
