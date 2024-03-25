@@ -12,7 +12,7 @@ time_start = datetime.now().strftime("%Y%m%d_%H%M%S")
 parser = argparse.ArgumentParser()
 parser.add_argument('--model-output', help=' : Model Output File Location', default=None)
 parser.add_argument('--openai-api-key', help=' : Model', default=None)
-parser.add_argument('--judge-model', help=' : Judge Model', default='gpt-4-0125-preview')
+parser.add_argument('--judge-model', help=' : Judge Model', default='gpt-4-1106-preview')
 parser.add_argument('--threads', help=' : Thread count', default=10, type=int)
 args = parser.parse_args()
 
@@ -30,17 +30,20 @@ df_judge_template = pd.read_json('judge_template.jsonl', lines=True)
 
 lock = Lock()
 def create_answers(model_output, is_multi_turn = False):
-    prompt = f"""**질문**\n{model_output['questions'][0]}\n\n**모델 답변**\n{model_output['outputs'][0]}\n\n[[대화 종료. 평가 시작.]]"""
+    prompt = f"""**질문**\n{model_output['questions'][0]}\n\n**모델 답변**\n{model_output['outputs'][0]}"""
 
     if model_output['references'] != None:
         if model_output['references'][0] != None:
             prompt += f"\n\n**Ground Truth**\n{model_output['references'][0]}"
 
     if is_multi_turn:
-        prompt += f"\n\n**이어지는 질문**\n{model_output['questions'][1]}\n\n**모델 답변**\n{model_output['outputs'][1]}\n\n[[대화 종료. 평가 시작.]]"
+        prompt += f"\n\n**이어지는 질문**\n{model_output['questions'][1]}\n\n**모델 답변**\n{model_output['outputs'][1]}"
         if model_output['references'] != None:
             if model_output['references'][1] != None:
                 prompt += f"\n\n**Ground Truth**\n{model_output['references'][1]}"
+                
+    prompt += "\n\n[[대화 종료. 평가 시작.]]"
+    
     try:
         response = client.chat.completions.create(
           model=args.judge_model,
