@@ -1,0 +1,4 @@
+{
+    "single_turn_template": "<s>Human: {0}\n\nAssistant: </s>",
+    "multi_turn_template": "<s>Human: {0}\n\nAssistant: </s>{1}</s>Human: {2}\n\nAssistant: </s>"
+}
