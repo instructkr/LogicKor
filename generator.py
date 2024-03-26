@@ -6,7 +6,7 @@ import os
 parser = argparse.ArgumentParser()
 parser.add_argument('--gpu_devices', help=' : CUDA_VISIBLE_DEVICES', default='0')
 parser.add_argument('--model', help=' : Model to evaluate', default='yanolja/EEVE-Korean-Instruct-2.8B-v1.0')
-parser.add_argument('--template', help=' : Template File Location', default='./template.json')
+parser.add_argument('--template', help=' : Template File Location', default='./templates/template-EEVE.json')
 parser.add_argument('--model_len', help=' : Maximum Model Length', default=4096, type=int)
 args = parser.parse_args()
 os.environ["CUDA_VISIBLE_DEVICES"] = args.gpu_devices
@@ -20,7 +20,6 @@ llm = LLM(model=args.model, tensor_parallel_size=gpu_counts, max_model_len=args.
 sampling_params = SamplingParams(temperature=0, top_p=1, top_k=-1, early_stopping=True, best_of=4, use_beam_search=True, skip_special_tokens=False, max_tokens=args.model_len, stop=['<|endoftext|>', '</s>', '<|im_end|>', '[INST]', '[/INST]'])
 
 df_questions = pd.read_json('questions.jsonl', lines=True)
-
 
 def format_single_turn_question(question):
     return single_turn_template.format(question[0])
