@@ -1,6 +1,9 @@
 # LogicKor
 한국어 언어모델 다분야 사고력 벤치마크
 
+## Benchmark Website
+https://lk.instruct.kr/
+
 ## Repository
 본 Repo는 LogicKor 벤치마크의 추론 및 평가 코드, 데이터셋을 담고 있습니다.
 
