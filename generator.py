@@ -52,7 +52,11 @@ def format_double_turn_question(question, single_turn_output):
         question[0], single_turn_output, question[1]
     )
 
-multi_turn_questions = df_questions[['questions', 'id']].apply(lambda x: format_double_turn_question(x['questions'], single_turn_outputs[x['id'] - 1]), axis=1) # bad code ig?
+multi_turn_questions = df_questions[['questions', 'id']].apply(
+    lambda x: format_double_turn_question(x['questions'], single_turn_outputs[x['id'] - 1]),
+    axis=1
+) # bad code ig?
+
 multi_turn_outputs = [
     output.outputs[0].text.strip()
     for output in llm.generate(multi_turn_questions, sampling_params)
