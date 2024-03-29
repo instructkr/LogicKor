@@ -1,20 +1,23 @@
+from typing import Dict, Union
 import argparse
-import pandas as pd
-from openai import OpenAI
-from concurrent.futures import ThreadPoolExecutor
-from threading import Lock
+import re
 import json
 import time
 from datetime import datetime
-import re
+from threading import Lock
+
+import pandas as pd
+from openai import OpenAI
+from concurrent.futures import ThreadPoolExecutor
+
 
 time_start = datetime.now().strftime("%Y%m%d_%H%M%S")
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--model-output', help=' : Model Output File Location', default=None)
-parser.add_argument('--openai-api-key', help=' : Model', default=None)
-parser.add_argument('--judge-model', help=' : Judge Model', default='gpt-4-1106-preview')
-parser.add_argument('--threads', help=' : Thread count', default=10, type=int)
+parser.add_argument('-o', '--model-output', help=' : Model Output File Location', default=None)
+parser.add_argument('-k', '--openai-api-key', help=' : Model', default=None)
+parser.add_argument('-j', '--judge-model', help=' : Judge Model', default='gpt-4-1106-preview')
+parser.add_argument('-t', '--threads', help=' : Thread count', default=10, type=int)
 args = parser.parse_args()
 
 if args.model_output is None:
@@ -30,16 +33,26 @@ df_model_outputs = pd.read_json(args.model_output, lines=True)
 df_judge_template = pd.read_json('judge_template.jsonl', lines=True)
 
 lock = Lock()
-def create_answers(model_output, is_multi_turn=False):
+
+
+def create_answers(
+    model_output, is_multi_turn: bool = False
+) -> Dict[str, Union[str, float]]:
     # Construct prompt from model output
-    prompt = f"**질문**\n{model_output['questions'][0]}\n\n**모델 답변**\n{model_output['outputs'][0]}"
-    if model_output['references'] and model_output['references'][0]:
-        prompt += f"\n\n**Ground Truth**\n{model_output['references'][0]}"
+    model_questions = model_output['questions']
+    model_outputs = model_output['outputs']
+    model_references = model_output['references']
+    
+    prompt = f"**질문**\n{model_questions[0]}\n\n**모델 답변**\n{model_outputs[0]}"
+
+    if model_references and model_references[0]:
+        prompt += f"\n\n**Ground Truth**\n{model_references[0]}"
 
     if is_multi_turn:
-        prompt += f"\n\n**이어지는 질문**\n{model_output['questions'][1]}\n\n**모델 답변**\n{model_output['outputs'][1]}"
-        if model_output['references'] and model_output['references'][1]:
-            prompt += f"\n\n**Ground Truth**\n{model_output['references'][1]}"
+        prompt += f"\n\n**이어지는 질문**\n{model_questions[1]}\n\n**모델 답변**\n{model_outputs[1]}"
+        if model_references and model_references[1]:
+            prompt += f"\n\n**Ground Truth**\n{model_references[1]}"
+    
     prompt += "\n\n[[대화 종료. 평가 시작.]]"
 
     try:
@@ -67,6 +80,7 @@ def create_answers(model_output, is_multi_turn=False):
             'judge_message': judge_message,
             'judge_score': judge_score
         }
+
     except Exception as e:
         print("Error. Retrying after 10 sec", e)
         time.sleep(10)
@@ -88,5 +102,9 @@ def process_item(_, row):
             f.write(json.dumps(row, ensure_ascii=False))
             f.write('\n')
 
-with ThreadPoolExecutor(max_workers=args.threads) as executor:
-    list(executor.map(process_item, df_model_outputs.index, df_model_outputs.iterrows()))
+with ThreadPoolExecutor(max_workers=int(args.threads)) as executor:
+    list(executor.map(
+        process_item,
+        df_model_outputs.index,
+        df_model_outputs.iterrows()
+    ))
