@@ -33,7 +33,7 @@ sampling_params = SamplingParams(
     use_beam_search=True,
     skip_special_tokens=False,
     max_tokens=args.model_len,
-    stop=['<|endoftext|>', '</s>', '<|im_end|>', '[INST]', '[/INST]']
+    stop=['<|endoftext|>', '</s>', '<|im_end|>', '[INST]', '[/INST]', '<end_of_turn>', '<start_of_turn>']
 )
 
 df_questions = pd.read_json('questions.jsonl', lines=True)
