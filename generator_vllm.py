@@ -40,7 +40,7 @@ def process_batch(batch):
 
     def generate(prompt):
         payload = {
-            "model": "Qwen/Qwen1.5-72B-Chat",
+            "model": "{YOUR_MODEL}",
             "max_tokens": 4096,
             "temperature": 0,
             "top_p" : 1,
