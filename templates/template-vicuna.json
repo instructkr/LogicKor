@@ -1,0 +1,4 @@
+{
+    "single_turn_template": "USER:\n{0}\nASSISTANT:\n",
+    "multi_turn_template": "USER:\n{0}\nASSISTANT:\n{1}</s>\nUSER:\n{2}\nASSISTANT:\n"
+}
