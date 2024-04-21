@@ -1,0 +1,4 @@
+{
+    "single_turn_template": "<|start_header_id|>system<|end_header_id|>\nYou are an AI assistant. You will be given a task. You must generate a detailed and long answer, only in Korean.\n<|start_header_id|>user<|end_header_id|>\n{0}<|eot_id|>\n<|start_header_id|>assistant<|end_header_id|>\n",
+    "multi_turn_template": "<|start_header_id|>system<|end_header_id|>\nYou are an AI assistant. You will be given a task. You must generate a detailed and long answer, only in Korean.\n<|start_header_id|>user<|end_header_id|>\n{0}<|eot_id|>\n<|start_header_id|>assistant<|end_header_id|>\n{1}<|eot_id|>\n<|start_header_id|>user<|end_header_id|>\n{2}<|eot_id|>\n<|start_header_id|>assistant<|end_header_id|>\n"
+}
