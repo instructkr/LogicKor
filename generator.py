@@ -62,24 +62,32 @@ def collate_fn(batch):
     return pd.DataFrame(batch)
 
 
-def process_batch(batch):
-    single_turn_questions = batch['questions'].apply(lambda x: format_single_turn_question(x))
+def process_batch(batch: pd.DataFrame):
+    _single_turn_questions = batch['questions'].apply(lambda x: format_single_turn_question(x))
+    # Convert tp `list[str]` for `llm.generate`
+    single_turn_questions = _single_turn_questions.tolist() if isinstance(_single_turn_questions, pd.Series) else _single_turn_questions
+
     single_turn_outputs = [
         output.outputs[0].text.strip()
         for output in llm.generate(single_turn_questions, sampling_params)
     ]
+    # Convert to `pd.Series` for multi-turn question generation
+    single_turn_outputs = pd.Series(single_turn_outputs, index=batch.index)
 
     def format_multi_turn_question(row):
         return MULTI_TURN_TEMPLATE.format(
             row['questions'][0], single_turn_outputs[row.name], row['questions'][1]
         )
 
-    multi_turn_questions = batch.apply(format_multi_turn_question, axis=1)
+    _multi_turn_questions = batch.apply(format_multi_turn_question, axis=1)
+    # Convert tp `list[str]` for `llm.generate``
+    multi_turn_questions = _multi_turn_questions.tolist() if isinstance(_multi_turn_questions, pd.Series) else _multi_turn_questions
 
     multi_turn_outputs = [
         output.outputs[0].text.strip()
         for output in llm.generate(multi_turn_questions, sampling_params)
     ]
+    multi_turn_outputs = pd.Series(multi_turn_outputs, index=batch.index)
 
     return pd.DataFrame({
         'id': batch['id'],
@@ -88,7 +96,6 @@ def process_batch(batch):
         'outputs': list(zip(single_turn_outputs, multi_turn_outputs)),
         'references': batch['references']
     })
-
 
 def process_data(df_questions, batch_size, num_workers):
     dataset = QuestionDataset(df_questions)
@@ -102,8 +109,10 @@ def process_data(df_questions, batch_size, num_workers):
         pin_memory=True
     )
 
-    with ThreadPoolExecutor() as executor:
-        results = list(executor.map(process_batch, dataloader))
+    # with ThreadPoolExecutor() as executor:
+    #     results = list(executor.map(process_batch, dataloader))
+    # Disable ThreadPoolExecutor due to conflict with `vllm` scheduler.
+    results = list(map(process_batch, dataloader))
 
     df_output = pd.concat(results, ignore_index=True)
     df_output.to_json(
