@@ -46,5 +46,7 @@ for category, scores in category_scores.items():
 # 전체 점수의 평균 계산 및 출력
 avg_total_single = sum(total_single_scores) / len(total_single_scores)
 avg_total_multi = sum(total_multi_scores) / len(total_multi_scores)
+avg_total = (avg_total_single + avg_total_multi) / 2
 print(f"전체 싱글 점수 평균: {avg_total_single:.2f}")
 print(f"전체 멀티 점수 평균: {avg_total_multi:.2f}")
+print(f"전체 점수: {avg_total:.2f}")
