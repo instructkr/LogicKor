@@ -1,26 +1,15 @@
 import os
-import argparse
 import pandas as pd
 import requests
 from torch.utils.data import DataLoader, Dataset
 from concurrent.futures import ThreadPoolExecutor
+import time
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--template', help=' : Template File Location', default='./templates/template-EEVE.json')
-parser.add_argument('--batch_size', help=' : Batch Size', default=2, type=int)
-parser.add_argument('--num_workers', help=' : Number of DataLoader Workers', default=2, type=int)
-args = parser.parse_args()
-
-df_config = pd.read_json(args.template, typ='series')
-SINGLE_TURN_TEMPLATE = df_config.iloc[0]  
-MULTI_TURN_TEMPLATE = df_config.iloc[1]
-
-API_ENDPOINT = "{YOUR_VLLM_ENDPOINT}/v1/completions"
+API_ENDPOINT = "https://openrouter.ai/api/v1/chat/completions"
+MODEL_NAME = "MODEL_NAME_HERE"
+API_KEY = 'YOUR_API_KEY'
 
 df_questions = pd.read_json('questions.jsonl', lines=True)
-
-def format_single_turn_question(question):
-    return SINGLE_TURN_TEMPLATE.format(question[0])
 
 class QuestionDataset(Dataset):
     def __init__(self, df):
@@ -29,77 +18,103 @@ class QuestionDataset(Dataset):
     def __len__(self):
         return len(self.df)
 
-    def __getitem__(self, idx):  
+    def __getitem__(self, idx):
         return self.df.iloc[idx]
 
 def collate_fn(batch):
     return pd.DataFrame(batch)
 
+def generate(prompt, max_retries=20):
+    payload = {
+        "messages": [
+            {"content": "You are a helpful assistant", "role": "system"},
+            {"content": prompt, "role": "user"}
+        ],
+        "model": MODEL_NAME,
+        "frequency_penalty": 0,
+        "max_tokens": 8192,
+        "presence_penalty": 0,
+        "stream": False,
+        "temperature": 0,
+        "top_p": 1,
+    }
+
+    retries = 0
+    while retries < max_retries:
+        try:
+            response = requests.post(API_ENDPOINT, json=payload, headers={'Authorization': f'Bearer {API_KEY}'}, timeout=120)
+            response.raise_for_status()
+            result = response.json()
+            print(result)
+            return result['choices'][0]['message']["content"].strip()
+        except (requests.RequestException, KeyError) as e:
+            print(f"Error: {e}")
+            retries += 1
+            time.sleep(10)  # wait for 2 seconds before retrying
+    return "Failed to generate response after several attempts."
+
 def process_batch(batch):
-    single_turn_questions = batch['questions'].apply(lambda x: format_single_turn_question(x))
-
-    def generate(prompt):
-        payload = {
-            "model": "{YOUR_MODEL}",
-            "max_tokens": 4096,
-            "temperature": 0,
-            "top_p" : 1,
-            "top_k" : -1,
-            "early_stopping" : True,
-            "best_of" : 4,
-            "use_beam_search" : True,
-            "skip_special_tokens" : False,
-            "prompt" : prompt
-        }
-
-        response = requests.post(API_ENDPOINT, json=payload)
-        result = response.json()
-        print(prompt)
-        print(result)
-        return result['choices'][0]['text'].strip().replace("<|im_end|>","")
-
+    print(batch)
     single_turn_outputs = []
-    s = 0
 
-    for prompt in single_turn_questions.tolist():
-        output = generate(prompt)
+    for question in batch['questions']:
+        output = generate(question[0])
         single_turn_outputs.append(output)
-        s = s + 1
-        print("s " + str(s))
 
-    def format_multi_turn_question(row):  
-        return MULTI_TURN_TEMPLATE.format(
-            row['questions'][0], single_turn_outputs[row.name], row['questions'][1]  
-        )
-
-    multi_turn_questions = batch.apply(format_multi_turn_question, axis=1)
+    multi_turn_questions = []
+    for idx, row in batch.iterrows():
+        multi_turn_prompt = [
+            {"role": "user", "content": row['questions'][0]},
+            {"role": "assistant", "content": single_turn_outputs[0]},
+            {"role": "user", "content": row['questions'][1]}
+        ]
+        print("multi")
+        multi_turn_questions.append(multi_turn_prompt)
 
     multi_turn_outputs = []
-    i = 0
-
-    for prompt in multi_turn_questions.tolist():
-        output = generate(prompt)
-        multi_turn_outputs.append(output)
-        i = i + 1
-        print("m " + str(i))
+    for prompt in multi_turn_questions:
+        payload = {
+            "messages": prompt,
+            "model": MODEL_NAME,
+            "frequency_penalty": 0,
+            "max_tokens": 8192,
+            "presence_penalty": 0,
+            "stream": False,
+            "temperature": 0,
+            "top_p": 1,
+        }
+        retries = 0
+        while retries < 5:
+            try:
+                response = requests.post(API_ENDPOINT, json=payload, headers={'Authorization': f'Bearer {API_KEY}'}, timeout=120)
+                response.raise_for_status()
+                result = response.json()
+                
+                multi_turn_outputs.append(result['choices'][0]['message']["content"].strip())
+                break
+            except (requests.RequestException, KeyError) as e:
+                print(f"Error: {e}")
+                retries += 1
+                time.sleep(2)
+        else:
+            multi_turn_outputs.append("Failed to generate response after several attempts.")
 
     return pd.DataFrame({
         'id': batch['id'],
-        'category': batch['category'], 
+        'category': batch['category'],
         'questions': batch['questions'],
         'outputs': list(zip(single_turn_outputs, multi_turn_outputs)),
         'references': batch['references']
     })
 
-def process_data(df_questions, batch_size, num_workers):
+def process_data(df_questions, batch_size=1, num_workers=42):
     dataset = QuestionDataset(df_questions)
     dataloader = DataLoader(
         dataset,
         batch_size=batch_size,
-        shuffle=False, 
+        shuffle=False,
         num_workers=num_workers,
         collate_fn=collate_fn,
-        prefetch_factor=None,
         pin_memory=True
     )
 
@@ -108,10 +123,11 @@ def process_data(df_questions, batch_size, num_workers):
 
     df_output = pd.concat(results, ignore_index=True)
     df_output.to_json(
-        'qwen1.5-32B-Chat.jsonl',
-        orient='records', 
+        f'{MODEL_NAME}.jsonl',
+        orient='records',
         lines=True,
         force_ascii=False
     )
 
-process_data(df_questions, args.batch_size, args.num_workers)
+# Call the process_data function with appropriate parameters
+process_data(df_questions, batch_size=1, num_workers=42)
