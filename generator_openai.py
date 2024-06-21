@@ -3,6 +3,7 @@ import pandas as pd
 from openai import OpenAI
 import time
 import os
+from tqdm import tqdm
 
 MAX_MODEL_LEN = 1600
 # MODEL = "solar-1-mini-chat"
@@ -19,7 +20,7 @@ def format_single_turn_question(question):
 single_turn_questions = df_questions['questions'].map(format_single_turn_question)
 single_turn_outputs = []
 
-for question in single_turn_questions:
+for question in tqdm(single_turn_questions, desc="Processing Single Turn Questions"):
     response = client.chat.completions.create(
         model=MODEL,
         messages=[
@@ -39,7 +40,7 @@ def format_double_turn_question(question, single_turn_output):
 
 multi_turn_questions = df_questions[['questions', 'id']].apply(lambda x: format_double_turn_question(x['questions'], single_turn_outputs[x['id']-1]), axis=1)
 multi_turn_outputs = []
-for question in multi_turn_questions:
+for question in tqdm(multi_turn_questions, desc="Processing Multi Turn Questions"):
     response = client.chat.completions.create(
         model=MODEL,
         messages=[
