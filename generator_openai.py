@@ -116,7 +116,7 @@ git merge feature
                 responses.append(response.choices[0].message.content)
             return response
 
-    llm = LLMWrapper(OpenAI(base_url=args.api_base, api_key=args.api_key))
+    llm = LLMWrapper(OpenAI(base_url=args.api_base, api_key=args.api_key, timeout=3600*24))
     
     df_questions = pd.read_json('questions.jsonl', lines=True)
     
