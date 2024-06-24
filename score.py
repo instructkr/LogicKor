@@ -37,16 +37,31 @@ for file_path in glob.glob(args.print):
             total_single_scores.append(single_score)
             total_multi_scores.append(multi_score)
 
-# 카테고리별 평균 점수 계산
+# 표의 헤더 생성
+table_header = "| Category | Single turn | Multi turn |\n|---|---|---|"
+
+# 표의 내용 생성
+table_rows = []
 for category, scores in category_scores.items():
     avg_single = sum(scores['single_scores']) / len(scores['single_scores'])
     avg_multi = sum(scores['multi_scores']) / len(scores['multi_scores'])
-    print(f"카테고리: {category}, 싱글 점수 평균: {avg_single:.2f}, 멀티 점수 평균: {avg_multi:.2f}")
+    table_rows.append(f"| {category} | {avg_single:.2f} | {avg_multi:.2f} |")
+    
+    total_single_scores.extend(scores['single_scores'])
+    total_multi_scores.extend(scores['multi_scores'])
+
+# 카테고리별 점수 평균 출력
+print(table_header)
+for row in table_rows:
+    print(row)
 
 # 전체 점수의 평균 계산 및 출력
 avg_total_single = sum(total_single_scores) / len(total_single_scores)
 avg_total_multi = sum(total_multi_scores) / len(total_multi_scores)
 avg_total = (avg_total_single + avg_total_multi) / 2
-print(f"전체 싱글 점수 평균: {avg_total_single:.2f}")
-print(f"전체 멀티 점수 평균: {avg_total_multi:.2f}")
-print(f"전체 점수: {avg_total:.2f}")
+
+# 전체 점수 평균 출력
+print(f"\n| Category | Score |\n|---|---|")
+print(f"| Single turn | {avg_total_single:.2f} |")
+print(f"| Multi turn | {avg_total_multi:.2f} |")
+print(f"| Overall | {avg_total:.2f} |")
