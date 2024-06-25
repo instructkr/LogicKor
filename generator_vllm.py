@@ -13,7 +13,7 @@ API_ENDPOINT = f"{VLLM_HOST}/v1/chat/completions"
 API_KEY = os.environ.get("API_KEY", "token-abc123")
 MAX_TOKENS = int(os.environ.get("MAX_TOKENS", 4096))
 
-df_questions = pd.read_json("questions.jsonl", lines=True)
+df_questions = pd.read_json("questions.jsonl", orient='records', encoding="utf-8-sig", lines=True)
 
 
 class QuestionDataset(Dataset):

@@ -1,9 +1,9 @@
-import argparse
+import time
+
 import pandas as pd
 from openai import OpenAI
-import time
-import os
 from tqdm import tqdm
+
 
 MAX_MODEL_LEN = 1600
 # MODEL = "solar-1-mini-chat"
@@ -12,7 +12,7 @@ MODEL = "gpt-4-turbo-2024-04-09"
 
 client = OpenAI(api_key="...")
 
-df_questions = pd.read_json('questions.jsonl', lines=True)
+df_questions = pd.read_json('questions.jsonl', orient='records', encoding="utf-8-sig", lines=True)
 
 def format_single_turn_question(question):
     return question[0]

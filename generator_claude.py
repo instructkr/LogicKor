@@ -1,16 +1,15 @@
-import argparse
+
 import pandas as pd
 from anthropic import Anthropic
-import time
-import os
 from tqdm import tqdm
+
 
 MAX_MODEL_LEN = 4096
 MODEL = "claude-3-5-sonnet-20240620"  # Update this to the appropriate Anthropic model
 
 client = Anthropic(api_key="...")  # Replace with your Anthropic API key
 
-df_questions = pd.read_json('questions.jsonl', lines=True)
+df_questions = pd.read_json('questions.jsonl', orient='records', encoding="utf-8-sig", lines=True)
 
 def format_single_turn_question(question):
     return question[0]

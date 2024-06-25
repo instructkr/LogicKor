@@ -1,6 +1,8 @@
-import json
-import glob
 import argparse
+import glob
+
+import pandas as pd
+
 
 # 파일 경로 패턴
 # file_pattern = './judge_20240418_103542.jsonl'
@@ -20,22 +22,21 @@ total_multi_scores = []
 
 # 지정된 패턴에 맞는 모든 파일을 찾아서 처리
 for file_path in glob.glob(args.print):
-    with open(file_path, 'r', encoding='utf-8-sig') as file:  # 'utf-8-sig'로 인코딩 변경
-        for line in file:
-            item = json.loads(line)
-            category = item['category']
-            single_score = item['query_single']['judge_score']
-            multi_score = item['query_multi']['judge_score']
+    file = pd.read_json(file_path, orient='records', encoding="utf-8-sig", lines=True)
+    for item in file.to_dict(orient='records'):
+        category = item['category']
+        single_score = item['query_single']['judge_score']
+        multi_score = item['query_multi']['judge_score']
 
-            if category not in category_scores:
-                category_scores[category] = {'single_scores': [], 'multi_scores': []}
+        if category not in category_scores:
+            category_scores[category] = {'single_scores': [], 'multi_scores': []}
 
-            category_scores[category]['single_scores'].append(single_score)
-            category_scores[category]['multi_scores'].append(multi_score)
+        category_scores[category]['single_scores'].append(single_score)
+        category_scores[category]['multi_scores'].append(multi_score)
 
-            # 전체 점수 리스트에 추가
-            total_single_scores.append(single_score)
-            total_multi_scores.append(multi_score)
+        # 전체 점수 리스트에 추가
+        total_single_scores.append(single_score)
+        total_multi_scores.append(multi_score)
 
 # 표의 헤더 생성
 table_header = "| Category | Single turn | Multi turn |\n|---|---|---|"
@@ -46,7 +47,7 @@ for category, scores in category_scores.items():
     avg_single = sum(scores['single_scores']) / len(scores['single_scores'])
     avg_multi = sum(scores['multi_scores']) / len(scores['multi_scores'])
     table_rows.append(f"| {category} | {avg_single:.2f} | {avg_multi:.2f} |")
-    
+
     total_single_scores.extend(scores['single_scores'])
     total_multi_scores.extend(scores['multi_scores'])
 

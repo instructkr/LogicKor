@@ -1,5 +1,6 @@
-import os
 import argparse
+import os
+
 import pandas as pd
 from vllm import LLM, SamplingParams
 
@@ -36,7 +37,7 @@ sampling_params = SamplingParams(
     stop=['<|endoftext|>', '</s>', '<|im_end|>', '[INST]', '[/INST]', '<end_of_turn>', '<start_of_turn>']
 )
 
-df_questions = pd.read_json('questions.jsonl', lines=True)
+df_questions = pd.read_json('questions.jsonl', orient='records', encoding="utf-8-sig", lines=True)
 
 def format_single_turn_question(question):
     return SINGLE_TURN_TEMPLATE.format(question[0])
