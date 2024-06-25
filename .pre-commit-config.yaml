@@ -1,0 +1,33 @@
+exclude: ^(exps)
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+        types: [file, python]
+      - id: trailing-whitespace
+        types: [file, python]
+      - id: mixed-line-ending
+      - id: check-added-large-files
+        args: [--maxkb=4096]
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.4.10
+    hooks:
+      # Run the linter.
+      - id: ruff
+      # Run the formatter.
+      - id: ruff-format
+  - repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+      - id: isort
+        name: isort (python)
+        args: ["--profile", "black", "-l", "120", "--lines-after-imports", "2"]
+  - repo: https://github.com/pycqa/flake8.git
+    rev: 7.1.0
+    hooks:
+      - id: flake8
+        types: [python]
+        args: ["--max-line-length", "120", "--ignore", "F811,F841,E203,E402,E501,E712,W503,E704,E731"]

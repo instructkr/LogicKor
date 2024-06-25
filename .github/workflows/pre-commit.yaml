@@ -1,0 +1,33 @@
+name: pre-commit
+
+on:
+  pull_request:
+  push:
+
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.8'
+      - name: Get pip cache dir
+        id: pip-cache
+        run: |
+          echo "dir=$(pip cache dir)" >> $GITHUB_OUTPUT
+      - name: pip/pre-commit cache
+        uses: actions/cache@v3
+        with:
+          path: |
+            ${{ steps.pip-cache.outputs.dir }}
+            ~/.cache/pre-commit
+          key: ${{ runner.os }}-pip-pre-commit-${{ hashFiles('**/.pre-commit-config.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-pre-commit
+      - name: pre-commit #  don't use in self-hosted `- uses: pre-commit/action@v2.0.3`
+        run: |
+          pip install pre-commit
+          pre-commit install --install-hooks
+          pre-commit run -a
