@@ -6,6 +6,7 @@ import pandas as pd
 import requests
 from torch.utils.data import DataLoader, Dataset
 
+
 MODEL_NAME = os.environ.get("MODEL_NAME", "VLLM_MODEL_NAME")
 
 VLLM_HOST = os.environ.get("VLLM_HOST", "http://VLLM_HOST:VLLM_PORT")
@@ -13,7 +14,7 @@ API_ENDPOINT = f"{VLLM_HOST}/v1/chat/completions"
 API_KEY = os.environ.get("API_KEY", "token-abc123")
 MAX_TOKENS = int(os.environ.get("MAX_TOKENS", 4096))
 
-df_questions = pd.read_json("questions.jsonl", orient='records', encoding="utf-8-sig", lines=True)
+df_questions = pd.read_json("questions.jsonl", orient="records", encoding="utf-8-sig", lines=True)
 
 
 class QuestionDataset(Dataset):
