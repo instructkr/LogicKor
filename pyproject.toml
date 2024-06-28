@@ -1,0 +1,11 @@
+[tool.ruff]
+target-version = "py38"
+line-length = 119
+indent-width = 4
+
+[tool.ruff.lint]
+ignore = ["C408", "C901", "E501", "E731", "E741", "W605"]
+select = ["C", "E", "F", "I", "W"]
+
+[tool.ruff.lint.isort]
+lines-after-imports = 2
