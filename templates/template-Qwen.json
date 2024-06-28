@@ -1,4 +1,0 @@
-{
-    "single_turn_template": "<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\n{0}<|im_end|>\n<|im_start|>assistant\n",
-    "multi_turn_template": "<|im_start|>system\nYou are a helpful assistant.<|im_end|>\n<|im_start|>user\n{0}<|im_end|>\n<|im_start|>assistant\n{1}<|im_end|>\n<|im_start|>user\n{2}<|im_end|>\n<|im_start|>assistant\n"
-}
