@@ -105,7 +105,7 @@ def process_item(client, row, judge_model, df_judge_template, output_file):
             f.write(json.dumps(row, ensure_ascii=False))
             f.write('\n')
 
-def process_file(client, file_path: Path, output_dir: Path, judge_model, df_judge_template, threads: int):
+def process_file(client, file_path: Path, output_dir: Path, judge_model, df_judge_template, threads: int, args):
     print(f"- 현재 Processing : {file_path}")
     df_model_outputs = pd.read_json(file_path, lines=True)
 
@@ -135,7 +135,7 @@ def main():
         if output_file_path.exists():
             print(f"이미 평가 완료.. : {file_path}")
             continue
-        process_file(client, file_path, output_dir, args.judge_model, df_judge_template, args.threads)
+        process_file(client, file_path, output_dir, args.judge_model, df_judge_template, args.threads, args)
         time.sleep(20) # ratelimit!
 
 if __name__ == "__main__":
