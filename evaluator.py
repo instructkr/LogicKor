@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import pandas as pd
 from openai import OpenAI
+from templates import JUDGE_TEMPLATE
 
 # Constants
 TIME_START = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -27,10 +28,7 @@ def create_azure_client(api_key: str):
         api_key=api_key
     )
 
-def load_judge_template() -> pd.DataFrame:
-    return pd.read_json('judge_template.jsonl', lines=True)
-
-def create_answers(client, model_output, judge_model, df_judge_template, is_multi_turn: bool = False, i=0) -> Dict[str, Union[str, float]]:
+def create_answers(client, model_output, judge_model, is_multi_turn: bool = False, i=0) -> Dict[str, Union[str, float]]:
     model_questions = model_output['questions']
     model_outputs = model_output['outputs']
     model_references = model_output['references']
@@ -59,7 +57,7 @@ def create_answers(client, model_output, judge_model, df_judge_template, is_mult
             temperature=0.0,
             n=1,
             messages=[
-                {"role": "system", "content": df_judge_template.iloc[1 if is_multi_turn else 0]['system_prompt']},
+                {"role": "system", "content": JUDGE_TEMPLATE['multi_turn' if is_multi_turn else 'single_turn']},
                 {"role": "user", "content": prompt}
             ]
         )
@@ -82,7 +80,7 @@ def create_answers(client, model_output, judge_model, df_judge_template, is_mult
         print("Error. Retrying after 20 sec", e)
         time.sleep(20)
 
-        # 현재는 에러에 따라서 다르게 핸들링 하지 않고 있음. 업데이트 필요함.
+        # 꼭 아래 이유가 아닐 수 있음. 핸들링 필요.
         if i > 3:
             print("Impossible prompt, aborting..!")
             return {
@@ -90,11 +88,11 @@ def create_answers(client, model_output, judge_model, df_judge_template, is_mult
                 'judge_score': 0.0
             }
         i += 1
-        return create_answers(client, model_output, judge_model, df_judge_template, is_multi_turn, i)
+        return create_answers(client, model_output, judge_model, is_multi_turn, i)
 
-def process_item(client, row, judge_model, df_judge_template, output_file):
-    query_single = create_answers(client, row, judge_model, df_judge_template)
-    query_multi = create_answers(client, row, judge_model, df_judge_template, is_multi_turn=True)
+def process_item(client, row, judge_model, output_file):
+    query_single = create_answers(client, row, judge_model)
+    query_multi = create_answers(client, row, judge_model, is_multi_turn=True)
 
     row['query_single'] = query_single
     row['query_multi'] = query_multi
@@ -105,7 +103,7 @@ def process_item(client, row, judge_model, df_judge_template, output_file):
             f.write(json.dumps(row, ensure_ascii=False))
             f.write('\n')
 
-def process_file(client, file_path: Path, output_dir: Path, judge_model, df_judge_template, threads: int, args):
+def process_file(client, file_path: Path, output_dir: Path, judge_model, threads: int, args):
     print(f"- 현재 Processing : {file_path}")
     df_model_outputs = pd.read_json(file_path, lines=True)
 
@@ -114,7 +112,7 @@ def process_file(client, file_path: Path, output_dir: Path, judge_model, df_judg
 
     with ThreadPoolExecutor(max_workers=threads) as executor:
         for row in df_model_outputs.iterrows():
-            executor.submit(process_item, client, row[1], judge_model, df_judge_template, output_file)
+            executor.submit(process_item, client, row[1], judge_model, output_file)
 
 def is_hidden(filepath: Path) -> bool:
     return any(part.startswith('.') for part in filepath.parts)
@@ -122,7 +120,6 @@ def is_hidden(filepath: Path) -> bool:
 def main():
     args = get_args()
     client = create_azure_client(args.openai_api_key)
-    df_judge_template = load_judge_template()
 
     input_dir = Path(args.model_output_dir)
     output_dir = Path('./evaluated')
@@ -135,8 +132,8 @@ def main():
         if output_file_path.exists():
             print(f"이미 평가 완료.. : {file_path}")
             continue
-        process_file(client, file_path, output_dir, args.judge_model, df_judge_template, args.threads, args)
-        time.sleep(20) # ratelimit!
+        process_file(client, file_path, output_dir, args.judge_model, args.threads, args)
+        time.sleep(20) # to handle ratelimit!
 
 if __name__ == "__main__":
     main()
