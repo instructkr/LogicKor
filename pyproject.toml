@@ -9,4 +9,3 @@ select = ["C", "E", "F", "I", "W"]
 
 [tool.ruff.lint.isort]
 lines-after-imports = 2
-
