@@ -32,7 +32,7 @@ def get_args():
     return parser.parse_args()
 
 
-def create_azure_client(api_key: str):
+def create_openai_client(api_key: str):
     return OpenAI(api_key=api_key)
 
 
@@ -144,14 +144,18 @@ def is_hidden(filepath: Path) -> bool:
 
 
 def main():
+    print("Starting main function")
     args = get_args()
-    client = create_azure_client(args.openai_api_key)
+    print(f"Arguments: {args}")
+    client = create_openai_client(args.openai_api_key)
 
     input_dir = Path(args.model_output_dir)
     output_dir = Path("./evaluated")
 
     # Filter out hidden files
     json_files = [file for file in input_dir.rglob("*.jsonl") if not is_hidden(file)]
+    print(f"Found {len(json_files)} JSON files to process")
+
 
     for file_path in json_files:
         output_file_path = output_dir / file_path.relative_to(input_dir)
