@@ -144,9 +144,7 @@ def is_hidden(filepath: Path) -> bool:
 
 
 def main():
-    print("Starting main function")
     args = get_args()
-    print(f"Arguments: {args}")
     client = create_openai_client(args.openai_api_key)
 
     input_dir = Path(args.model_output_dir)
