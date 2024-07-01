@@ -14,8 +14,8 @@ pr 적극 환영합니다.
 ## Evalutation Example
 EEVE 템플릿, GPU 0,1 사용, model_len 4096
 ```
-python generator.py --model yanolja/EEVE-Korean-Instruct-10.8B-v1.0 --template templates/template-EEVE.json --gpu_devices 0,1 --model_len 4096
-python judgement.py --o yanolja_EEVE-Korean-Instruct-10.8B-v1.0.jsonl --k sk-somethingsomething --t 30
+python generator.py --model yanolja/EEVE-Korean-Instruct-10.8B-v1.0 --gpu_devices 0,1 --model_len 4096
+python judgement.py -o yanolja_EEVE-Korean-Instruct-10.8B-v1.0.jsonl -k sk-somethingsomething -t 30
 python score.py -p ./results/judge_HyperClovaX.jsonl 
 ```
 
