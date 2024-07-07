@@ -1,4 +1,4 @@
-import argparse
+import argparse  # noqa: I001
 import json
 import re
 import time
@@ -13,7 +13,6 @@ from openai import OpenAI
 
 from templates import JUDGE_TEMPLATE
 
-
 # Constants
 TIME_START = datetime.now().strftime("%Y%m%d_%H%M%S")
 LOCK = Lock()
@@ -21,13 +20,9 @@ LOCK = Lock()
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-o", "--model-output-dir", help="Model Output Directory", required=True
-    )
+    parser.add_argument("-o", "--model-output-dir", help="Model Output Directory", required=True)
     parser.add_argument("-k", "--openai-api-key", help="OpenAI API Key", required=True)
-    parser.add_argument(
-        "-j", "--judge-model", help="Judge Model", default="gpt-4-1106-preview"
-    )
+    parser.add_argument("-j", "--judge-model", help="Judge Model", default="gpt-4-1106-preview")
     parser.add_argument("-t", "--threads", help="Thread count", default=42, type=int)
     return parser.parse_args()
 
@@ -69,26 +64,16 @@ def create_answers(
             messages=[
                 {
                     "role": "system",
-                    "content": JUDGE_TEMPLATE[
-                        "multi_turn" if is_multi_turn else "single_turn"
-                    ],
+                    "content": JUDGE_TEMPLATE["multi_turn" if is_multi_turn else "single_turn"],
                 },
                 {"role": "user", "content": prompt},
             ],
         )
 
         content = response.choices[0].message.content
-        judge_message_match = re.search(
-            r"평가:(.*?)점수:", content.replace("*", ""), re.DOTALL
-        )
-        judge_message = (
-            judge_message_match.group(1).strip()
-            if judge_message_match
-            else "No judge message found"
-        )
-        judge_score_match = re.search(
-            r"점수:\s*(\d+(\.\d+)?)", content.replace("*", "")
-        )
+        judge_message_match = re.search(r"평가:(.*?)점수:", content.replace("*", ""), re.DOTALL)
+        judge_message = judge_message_match.group(1).strip() if judge_message_match else "No judge message found"
+        judge_score_match = re.search(r"점수:\s*(\d+(\.\d+)?)", content.replace("*", ""))
         if judge_score_match:
             judge_score = float(judge_score_match.group(1))
         else:
@@ -125,9 +110,7 @@ def process_item(client, row, judge_model, output_file):
             f.write("\n")
 
 
-def process_file(
-    client, file_path: Path, output_dir: Path, judge_model, threads: int, args
-):
+def process_file(client, file_path: Path, output_dir: Path, judge_model, threads: int, args):
     print(f"- 현재 Processing : {file_path}")
     df_model_outputs = pd.read_json(file_path, lines=True)
 
@@ -154,15 +137,12 @@ def main():
     json_files = [file for file in input_dir.rglob("*.jsonl") if not is_hidden(file)]
     print(f"Found {len(json_files)} JSON files to process")
 
-
     for file_path in json_files:
         output_file_path = output_dir / file_path.relative_to(input_dir)
         if output_file_path.exists():
             print(f"이미 평가 완료.. : {file_path}")
             continue
-        process_file(
-            client, file_path, output_dir, args.judge_model, args.threads, args
-        )
+        process_file(client, file_path, output_dir, args.judge_model, args.threads, args)
         time.sleep(20)  # to handle ratelimit!
 
 

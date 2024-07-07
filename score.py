@@ -1,8 +1,7 @@
-import argparse
+import argparse  # noqa: I001
 import glob
 
 import pandas as pd
-
 
 # 파일 경로 패턴
 # file_pattern = './judge_20240418_103542.jsonl'
