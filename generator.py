@@ -1,10 +1,9 @@
-import argparse
+import argparse  # noqa: I001
 import os
 
 import pandas as pd
 
 from templates import PROMPT_STRATEGY
-
 
 # Use aphrodite-engine or vLLM
 try:
@@ -25,9 +24,7 @@ parser.add_argument(
     help=" : Model to evaluate",
     default="yanolja/EEVE-Korean-Instruct-2.8B-v1.0",
 )
-parser.add_argument(
-    "-ml", "--model_len", help=" : Maximum Model Length", default=4096, type=int
-)
+parser.add_argument("-ml", "--model_len", help=" : Maximum Model Length", default=4096, type=int)
 args = parser.parse_args()
 
 print(f"Args - {args}")
@@ -50,9 +47,7 @@ sampling_params = SamplingParams(
     stop=["<|endoftext|>", "[INST]", "[/INST]", "<|im_end|>", "<|end|>", "<|eot_id|>"],
 )
 
-df_questions = pd.read_json(
-    "questions.jsonl", orient="records", encoding="utf-8-sig", lines=True
-)
+df_questions = pd.read_json("questions.jsonl", orient="records", encoding="utf-8-sig", lines=True)
 
 if not os.path.exists("./generated/" + args.model):
     os.makedirs("./generated/" + args.model)
@@ -69,8 +64,7 @@ for strategy_name, prompts in PROMPT_STRATEGY.items():
     single_turn_questions = df_questions["questions"].map(format_single_turn_question)
     print(single_turn_questions.iloc[0])
     single_turn_outputs = [
-        output.outputs[0].text.strip()
-        for output in llm.generate(single_turn_questions, sampling_params)
+        output.outputs[0].text.strip() for output in llm.generate(single_turn_questions, sampling_params)
     ]
 
     def format_double_turn_question(question, single_turn_output):
@@ -86,14 +80,11 @@ for strategy_name, prompts in PROMPT_STRATEGY.items():
         )
 
     multi_turn_questions = df_questions[["questions", "id"]].apply(
-        lambda x: format_double_turn_question(
-            x["questions"], single_turn_outputs[x["id"] - 1]
-        ),
+        lambda x: format_double_turn_question(x["questions"], single_turn_outputs[x["id"] - 1]),
         axis=1,
     )
     multi_turn_outputs = [
-        output.outputs[0].text.strip()
-        for output in llm.generate(multi_turn_questions, sampling_params)
+        output.outputs[0].text.strip() for output in llm.generate(multi_turn_questions, sampling_params)
     ]
 
     df_output = pd.DataFrame(
