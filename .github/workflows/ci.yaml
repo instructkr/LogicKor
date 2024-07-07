@@ -1,0 +1,38 @@
+name: CI
+
+on: [push]
+
+env:
+  OMP_NUM_THREADS: 2
+  MKL_NUM_THREADS: 2
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - uses: actions/cache@v4
+        name: Cache pip packages
+        with:
+          path: ~/.cache/uv
+          key: ${{ runner.os }}-python-${{ matrix.python-version }}
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Install dependencies
+        run: uv pip install --system -r requirements-format.txt
+
+      - name: Check lint
+        run: make check
