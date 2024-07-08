@@ -1,0 +1,5 @@
+line-length = 119
+
+[lint]
+extend-select = ["I"]
+
