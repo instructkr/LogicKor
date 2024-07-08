@@ -1,5 +1,6 @@
 import argparse  # noqa: I001
 import json
+import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -9,13 +10,18 @@ from threading import Lock
 from typing import Dict, Union
 
 import pandas as pd
-from openai import OpenAI
+from openai import AzureOpenAI, OpenAI
 
 from templates import JUDGE_TEMPLATE
 
 # Constants
 TIME_START = datetime.now().strftime("%Y%m%d_%H%M%S")
 LOCK = Lock()
+
+AZURE_ENDPOINT = os.environ.get("AZURE_ENDPOINT", None)
+AZURE_DEPLOYMENT_NAME = os.environ.get("AZURE_DEPLOYMENT_NAME", None)
+AZURE_API_VERSION = os.environ.get("AZURE_API_VERSION", None)
+USE_AZURE_OPENAI = AZURE_ENDPOINT is not None and AZURE_DEPLOYMENT_NAME is not None and AZURE_API_VERSION is not None
 
 
 def get_args():
@@ -24,11 +30,20 @@ def get_args():
     parser.add_argument("-k", "--openai-api-key", help="OpenAI API Key", required=True)
     parser.add_argument("-j", "--judge-model", help="Judge Model", default="gpt-4-1106-preview")
     parser.add_argument("-t", "--threads", help="Thread count", default=42, type=int)
+    parser.add_argument("--azure", help="Use Azure OpenAI", action="store_true")
     return parser.parse_args()
 
 
 def create_openai_client(api_key: str):
     return OpenAI(api_key=api_key)
+
+
+def create_azure_openai_client(api_key: str):
+    return AzureOpenAI(
+        azure_endpoint=AZURE_ENDPOINT,
+        api_key=api_key,
+        api_version=AZURE_API_VERSION,
+    )
 
 
 def create_answers(
@@ -57,18 +72,32 @@ def create_answers(
     prompt += "\n\n[[대화 종료. 평가 시작.]]"
 
     try:
-        response = client.chat.completions.create(
-            model=judge_model,
-            temperature=0.0,
-            n=1,
-            messages=[
-                {
-                    "role": "system",
-                    "content": JUDGE_TEMPLATE["multi_turn" if is_multi_turn else "single_turn"],
-                },
-                {"role": "user", "content": prompt},
-            ],
-        )
+        if USE_AZURE_OPENAI:  # azure
+            response = client.chat.completions.create(
+                model=AZURE_DEPLOYMENT_NAME,
+                temperature=0.0,
+                n=1,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": JUDGE_TEMPLATE["multi_turn" if is_multi_turn else "single_turn"],
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+            )
+        else:  # openai api
+            response = client.chat.completions.create(
+                model=judge_model,
+                temperature=0.0,
+                n=1,
+                messages=[
+                    {
+                        "role": "system",
+                        "content": JUDGE_TEMPLATE["multi_turn" if is_multi_turn else "single_turn"],
+                    },
+                    {"role": "user", "content": prompt},
+                ],
+            )
 
         content = response.choices[0].message.content
         judge_message_match = re.search(r"평가:(.*?)점수:", content.replace("*", ""), re.DOTALL)
@@ -128,7 +157,10 @@ def is_hidden(filepath: Path) -> bool:
 
 def main():
     args = get_args()
-    client = create_openai_client(args.openai_api_key)
+    if args.azure:
+        client = create_azure_openai_client(args.openai_api_key)
+    else:
+        client = create_openai_client(args.openai_api_key)
 
     input_dir = Path(args.model_output_dir)
     output_dir = Path("./evaluated")
