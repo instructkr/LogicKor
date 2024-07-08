@@ -31,7 +31,7 @@ python generator.py --model yanolja/EEVE-Korean-Instruct-10.8B-v1.0 --gpu_device
 #### OpenAI
 
 ```bash
-python evaluator.py -o yanolja_EEVE-Korean-Instruct-10.8B-v1.0.jsonl -k sk-somethingsomething -t 30
+python evaluator.py -o ./generated/yanolja/EEVE-Korean-Instruct-10.8B-v1.0 -k sk-somethingsomething -t 30
 ```
 
 #### Azure
@@ -41,7 +41,7 @@ export AZURE_ENDPOINT=$AZURE_ENDPOINT
 export AZURE_DEPLOYMENT_NAME=$AZURE_DEPLOYMENT_NAME
 export AZURE_API_VERSION=$AZURE_API_VERSION
 
-python evaluator.py --azure -o yanolja_EEVE-Korean-Instruct-10.8B-v1.0.jsonl -k sk-somethingsomething -t 30
+python evaluator.py --azure -o ./generated/yanolja/EEVE-Korean-Instruct-10.8B-v1.0 -k sk-somethingsomething -t 30
 ```
 
 ### 3. 결과 확인
