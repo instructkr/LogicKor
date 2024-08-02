@@ -44,7 +44,7 @@ sampling_params = SamplingParams(
     temperature=0,
     skip_special_tokens=True,
     max_tokens=args.model_len,
-    stop=["<|endoftext|>", "[INST]", "[/INST]", "<|im_end|>", "<|end|>", "<|eot_id|>"],
+    stop=["<|endoftext|>", "[INST]", "[/INST]", "<|im_end|>", "<|end|>", "<|eot_id|>", "<end_of_turn>", "<eos>"],
 )
 
 df_questions = pd.read_json("questions.jsonl", orient="records", encoding="utf-8-sig", lines=True)
