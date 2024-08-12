@@ -18,7 +18,7 @@ pr 적극 환영합니다.
 
 ## Evaluation Example
 
-EEVE 템플릿, GPU 0,1 사용, model_len 4096
+GPU 0,1 사용, model_len 4096
 
 ### 1. 인퍼런스 결과 생성
 
